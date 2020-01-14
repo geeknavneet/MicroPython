@@ -1,0 +1,186 @@
+import network
+from mqtt.umqttsimple import MQTTClient
+import machine
+import time
+import sys
+import uos as os
+IN1 = machine.Pin(16, machine.Pin.OUT)  #D0__builtin
+IN1.value(1)
+IN2 = machine.Pin(5, machine.Pin.OUT) #D1
+IN2.value(1)
+IN3 = machine.Pin(4, machine.Pin.OUT) #D2
+
+IN3.value(1)
+IN4 = machine.Pin(0, machine.Pin.OUT) #D3
+IN4.value(1)
+IN5 = machine.Pin(2, machine.Pin.OUT) #D4__builtin
+IN5.value(1)
+IN6 = machine.Pin(15, machine.Pin.OUT) #D8
+IN6.value(1)
+IN7 = machine.Pin(12, machine.Pin.OUT) #D6
+IN7.value(1)
+IN8 = machine.Pin(13, machine.Pin.OUT) #D7
+IN8.value(1)
+lock = machine.Pin(14, machine.Pin.OUT)#D5
+lock.value(1)
+
+def sub_cb(topic, msg):
+  if topic == b'MCU1' and msg == b'S052':
+    IN1.value(1)
+
+  elif topic == b'MCU1' and msg == b'S054':
+    IN1.value(0)
+
+  elif topic == b'MCU1' and msg == b'S082':
+    IN2.value(1)
+
+
+
+  elif topic == b'MCU1' and msg == b'S084':
+    IN2.value(0)
+
+
+
+  elif topic == b'MCU1' and msg == b'S022':
+    IN3.value(1)
+
+
+  elif topic == b'MCU1' and msg == b'S024':
+    IN3.value(0)
+
+
+  elif topic == b'MCU1' and msg == b'S042':
+    IN4.value(1)
+
+
+  elif topic == b'MCU1' and msg == b'S044':
+    IN4.value(0)
+
+
+  elif topic == b'MCU1' and msg == b'S072':
+    IN5.value(1)
+
+
+  elif topic == b'MCU1' and msg == b'S074':
+    IN5.value(0)
+
+
+  elif topic == b'MCU1' and msg == b'S012':
+    IN6.value(1)
+
+
+  elif topic == b'MCU1' and msg == b'S014':
+    IN6.value(0)
+
+
+  elif topic == b'MCU1' and msg == b'F012':
+    IN7.value(1)
+
+
+
+  elif topic == b'MCU1' and msg == b'F014':
+    IN7.value(0)
+
+  elif topic == b'MCU1' and msg == b'F022':
+    IN8.value(1)
+
+
+
+  elif topic == b'MCU1' and msg == b'F024':
+    IN8.value(0)
+
+
+  elif topic == b'MCU1'and msg == b'alllightson':
+    IN1.value(1)
+    IN2.value(1)
+    IN3.value(1)
+    IN4.value(1)
+    IN5.value(1)
+    IN6.value(1)
+  elif topic == b'MCU1'and msg == b'alllightsoff':
+    IN1.value(0)
+    IN2.value(0)
+    IN3.value(0)
+    IN4.value(0)
+    IN5.value(0)
+    IN6.value(0)
+  elif topic == b'MCU1' and msg == b'allon':
+    IN1.value(0)
+    IN2.value(0)
+    IN3.value(0)
+    IN4.value(0)
+    IN5.value(0)
+    IN6.value(0)
+    IN7.value(0)
+    IN8.value(0)
+
+  elif topic == b'MCU1' and msg == b'alloff':
+    IN1.value(1)
+    IN2.value(1)
+
+    IN3.value(1)
+    IN4.value(1)
+    IN5.value(1)
+    IN6.value(1)
+    IN7.value(1)
+    IN8.value(1)
+
+  elif topic == b'MCU1' and msg == b'Unlock':
+    lock.value(0)
+    time.sleep(0.4)
+    lock.value(1)
+
+def do_connect():
+    WIFI_SSID = 'HYPER'
+    WIFI_PASSWORD = '9910399961'
+
+    # turn off the WiFi Access Point
+    ap_if = network.WLAN(network.AP_IF)
+    ap_if.active(False)
+        # connect the device to the WiFi network
+    wifi = network.WLAN(network.STA_IF)
+    if not wifi.isconnected():
+      print("connecting to internet")
+      wifi.active(True)
+      wifi.connect(WIFI_SSID, WIFI_PASSWORD)
+      while not wifi.isconnected():
+        pass
+    print("wifi connected")
+
+
+# wait until the device is connected to the WiFi network
+
+def connect_and_subscribe():
+  global client_id, mqtt_server, topic_sub, client
+  client = MQTTClient("WEO-MCU1", "192.168.0.117", port=1883)
+  client.set_callback(sub_cb)
+  client.connect()
+  client.subscribe(topic="MCU1")
+  return client
+def restart_and_reconnect():
+  print('Failed to connect to MQTT broker. Reconnecting...')
+  time.sleep(10)
+  machine.reset()
+'''try:
+  do_connect()
+  client = connect_and_subscribe()
+  print('connected mqtt')
+except OSError as e:
+  restart_and_reconnect()'''
+
+while True:
+  try:
+    do_connect()
+    client = connect_and_subscribe()
+    print('connected mqtt')
+    if True:
+          # Blocking wait for message
+      client.wait_msg()
+    else:
+     # Non-blocking wait for message
+      client.check_msg()
+        # Then need to sleep to avoid 100% CPU usage (in a real
+        # app other useful actions would be performed instead)
+      time.sleep(1)
+  except OSError:
+    restart_and_reconnect()

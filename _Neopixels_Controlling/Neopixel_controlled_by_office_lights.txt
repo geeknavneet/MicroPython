@@ -1,0 +1,128 @@
+
+
+import neopixel
+import network
+from umqtt.robust import MQTTClient 
+import machine 
+import sys
+import time
+from machine import Pin
+
+n = 48
+p = 4
+
+np = neopixel.NeoPixel(machine.Pin(p), n)
+
+
+def sub_cb(topic, msg):
+  if topic == b'MCU1' and msg == b'S052':
+    np[0] = (255, 0, 0)
+    np.write()
+  elif topic == b'MCU1' and msg == b'S054':
+
+    np[0] = (0, 255, 0)
+    np.write()
+  
+  elif topic == b'MCU1' and msg == b'S082':
+    np[4] = (255, 0, 0)
+    np.write()
+  elif topic == b'MCU1' and msg == b'S084':
+    np[4] = (0, 255, 0)
+    np.write()
+  
+  elif topic == b'MCU1' and msg == b'S042':
+    np[8] = (255, 0,0)
+    np.write()
+  elif topic == b'MCU1' and msg == b'S044':
+    np[8] = (0, 255, 0)
+    np.write()
+  
+  elif topic == b'MCU1' and msg == b'S022':
+    np[12] = (255, 0, 0)
+    np.write()
+  elif topic == b'MCU1' and msg == b'S024':
+    np[12] = (0, 255, 0)
+    np.write()
+  elif topic == b'MCU2' and msg == b'S052':
+    np[16] = (255, 0, 0)
+    np.write()
+  elif topic == b'MCU2' and msg == b'S054':
+    np[16] = (0, 255, 0)
+    np.write()
+  
+  elif topic == b'MCU2' and msg == b'S082':
+    np[20] = (255, 0, 0)
+    np.write()
+  elif topic == b'MCU2' and msg == b'S084':
+    np[20] = (0, 255, 0)
+    np.write()
+  
+  elif topic == b'MCU2' and msg == b'S022':
+    np[24] = (255, 0,0)
+    np.write()
+  elif topic == b'MCU2' and msg == b'S024':
+    np[24] = (0, 255, 0)
+    np.write()
+  
+# WiFi connection information
+WIFI_SSID = 'HYPER'
+WIFI_PASSWORD = '9910399961'
+
+# turn off the WiFi Access Point
+ap_if = network.WLAN(network.AP_IF)
+ap_if.active(False)
+
+# connect the device to the WiFi network
+wifi = network.WLAN(network.STA_IF)
+wifi.active(True)
+
+wifi.connect(WIFI_SSID, WIFI_PASSWORD)
+
+# wait until the device is connected to the WiFi network
+MAX_ATTEMPTS = 50
+attempt_count = 0
+while not wifi.isconnected() and attempt_count < MAX_ATTEMPTS:
+    attempt_count += 1
+    time.sleep(1)
+
+if attempt_count == MAX_ATTEMPTS:
+    print('could not connect to the WiFi network')
+    sys.exit()
+client = MQTTClient("touch-hello", "192.168.0.117", port=1883) 
+client.set_callback(sub_cb) 
+client.connect()
+client.subscribe(topic="#") 
+while True:
+  if True:
+          # Blocking wait for message
+   client.wait_msg()
+  else:
+     # Non-blocking wait for message
+    client.check_msg()
+        # Then need to sleep to avoid 100% CPU usage (in a real
+        # app other useful actions would be performed instead)
+    time.sleep(1)
+print('disconnect')
+client.disconnect() 
+
+
+#np[7] = (120, 153, 23)
+#np[10] = (255, 0, 153)
+
+#np[0] = (255, 0, 0)#R0G0B0
+#np[1] = (0, 128, 0)#G1W0R1
+#np[2] = (0,0 ,64)#W1B1G2
+#np[3] = (0,0,2)#B2R2W2
+#np[4] = (0,0,2)#R3G3B3
+#np[5] = (0,0,5)#G4W3R4
+# n is {0,3,6......}
+#RnGnBn
+#Gn+1WnRn+1
+#Wn+1Bn+1Gn+2
+#Bn+2Rn+2Wn+2
+
+
+
+
+
+

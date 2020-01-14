@@ -1,0 +1,63 @@
+
+
+import network
+from umqtt.robust import MQTTClient 
+import machine 
+import sys
+import dht
+import time
+
+print("Starting DHT11")
+d = dht.DHT11(machine.Pin(4))
+
+
+ 
+def sub_cb(topic, msg): 
+   print(msg) 
+ 
+# WiFi connection information
+WIFI_SSID = 'HYPER'
+WIFI_PASSWORD = '9910399961'
+
+# turn off the WiFi Access Point
+ap_if = network.WLAN(network.AP_IF)
+ap_if.active(False)
+
+# connect the device to the WiFi network
+wifi = network.WLAN(network.STA_IF)
+wifi.active(True)
+
+wifi.connect(WIFI_SSID, WIFI_PASSWORD)
+
+# wait until the device is connected to the WiFi network
+MAX_ATTEMPTS = 20
+attempt_count = 0
+while not wifi.isconnected() and attempt_count < MAX_ATTEMPTS:
+    attempt_count += 1
+    time.sleep(1)
+
+if attempt_count == MAX_ATTEMPTS:
+    print('could not connect to the WiFi network')
+    sys.exit()
+
+client = MQTTClient("hello", "35.193.200.242", port=1883) 
+client.set_callback(sub_cb) 
+client.connect()
+client.subscribe(topic="DHT11_sensor") 
+while True:
+    time.sleep(2)
+    print("Measuring")
+    d.measure()
+    temp = d.temperature()
+    humid = d.humidity()
+    print("Temperature: %3.1f °C" % temp)
+    client.publish(topic='temp', msg=str(temp))
+    print("Humidity: %3.2f %% RH" % humid)
+    client.publish(topic='humid', msg=str(humid))
+
+  
+
+
+
+
+

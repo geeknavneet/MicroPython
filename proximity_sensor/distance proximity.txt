@@ -1,0 +1,54 @@
+
+
+import network
+from umqtt.robust import MQTTClient 
+import machine 
+import time 
+from hcsr04 import HCSR04
+
+ 
+def sub_cb(topic, msg): 
+   print(msg) 
+ 
+# WiFi connection information
+WIFI_SSID = 'HYPER'
+WIFI_PASSWORD = '9910399961'
+
+# turn off the WiFi Access Point
+ap_if = network.WLAN(network.AP_IF)
+ap_if.active(False)
+
+# connect the device to the WiFi network
+wifi = network.WLAN(network.STA_IF)
+wifi.active(True)
+wifi.connect(WIFI_SSID, WIFI_PASSWORD)
+
+# wait until the device is connected to the WiFi network
+MAX_ATTEMPTS = 20
+attempt_count = 0
+while not wifi.isconnected() and attempt_count < MAX_ATTEMPTS:
+    attempt_count += 1
+    time.sleep(1)
+
+if attempt_count == MAX_ATTEMPTS:
+    print('could not connect to the WiFi network')
+    sys.exit()
+
+client = MQTTClient("hello", "35.193.200.242", port=1883) 
+client.set_callback(sub_cb) 
+client.connect()
+client.subscribe(topic="Proximity_sensor") 
+while True:
+  sensor = HCSR04(trigger_pin=5, echo_pin=4)
+
+  distance = sensor.distance_cm()
+  if distance <= 5cm
+  print('Distance:', distance, 'cm')
+  client.publish(topic='hello',msg=str(distance))
+  time.sleep(1)
+  print('Distance:', distance, 'cm')
+  client.publish(topic='hello',msg=str(distance))
+  time.sleep(1)
+
+
+
